@@ -31,9 +31,15 @@ func TestNextIfaces(t *testing.T) {
 
 // test for createVethPair
 func TestCreateVethPair(t *testing.T) {
-	err := pkg.CreateVethPair()
+	err := pkg.CreateBridge("192.168.137.1/24")
+	if err != nil {
+		t.Errorf("Error creating bridge: %s", err)
+	}
+
+	iface, err := pkg.CreateVethPair()
 	if err != nil {
 		t.Errorf("Error creating veth pair: %s", err)
 	}
-	exec.Command("sudo", "ip", "link", "delete", "lab-veth1").Run()
+	exec.Command("sudo", "ip", "link", "delete", iface).Run()
+	exec.Command("sudo", "ip", "link", "delete", "lab-bridge").Run()
 }

@@ -1,6 +1,8 @@
 {
     "cSpell.words": [
+        "addbr",
         "appnetlab",
+        "brctl",
         "iface",
         "Ifaces",
         "netns",

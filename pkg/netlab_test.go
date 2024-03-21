@@ -43,3 +43,50 @@ func TestCreateVethPair(t *testing.T) {
 	exec.Command("sudo", "ip", "link", "delete", iface).Run()
 	exec.Command("sudo", "ip", "link", "delete", "lab-bridge").Run()
 }
+
+// // Create 2 interfaces and a bridge and make ping between them
+func TestPing(t *testing.T) {
+
+	namespace := "ns-lab-01"
+
+	//set mode route
+	err := pkg.SetModeRoute()
+	if err != nil {
+		t.Errorf("Error setting mode route: %s", err)
+	}
+
+	//create bridge
+	err = pkg.CreateBridge("192.168.137.254/24")
+	if err != nil {
+		t.Errorf("Error creating bridge: %s", err)
+	}
+	//create ns
+	err = pkg.CreateNamespace(namespace)
+	if err != nil {
+		t.Errorf("Error creating namespace: %s", err)
+	}
+
+	//create veth pair
+	iface1, err := pkg.CreateVethPair()
+	if err != nil {
+		t.Errorf("Error creating veth pair: %s", err)
+	}
+
+	//add veth1 to ns
+	err = pkg.AddIfaceToNamespace(namespace, iface1)
+	if err != nil {
+		t.Errorf("Error adding interface to namespace: %s", err)
+	}
+
+	//set ip to veth1 in ns
+	err = pkg.SetIpInNamespace("192.168.137.2", iface1, namespace)
+	if err != nil {
+		t.Errorf("Error setting ip to interface in namespace: %s", err)
+	}
+	//set veth1 up
+	err = pkg.UpIfaceInNamespace(iface1, namespace)
+	if err != nil {
+		t.Errorf("Error setting interface up in namespace: %s", err)
+	}
+
+}

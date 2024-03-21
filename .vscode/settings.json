@@ -4,6 +4,7 @@
         "iface",
         "Ifaces",
         "netns",
+        "nfaces",
         "nsappnetlab",
         "veth"
     ]

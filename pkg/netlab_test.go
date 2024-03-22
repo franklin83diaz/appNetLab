@@ -79,14 +79,26 @@ func TestPing(t *testing.T) {
 	}
 
 	//set ip to veth1 in ns
-	err = pkg.SetIpInNamespace("192.168.137.2", iface1, namespace)
+	err = pkg.SetIpInNamespace("192.168.137.2/24", iface1, namespace)
 	if err != nil {
 		t.Errorf("Error setting ip to interface in namespace: %s", err)
 	}
 	//set veth1 up
-	err = pkg.UpIfaceInNamespace(iface1, namespace)
+	err = pkg.UpIfaceInNamespace(namespace, iface1)
 	if err != nil {
 		t.Errorf("Error setting interface up in namespace: %s", err)
+	}
+
+	//ser gateway
+	err = pkg.SetDefaultGatewayInNamespace("192.168.137.254", iface1, namespace)
+	if err != nil {
+		t.Errorf("Error setting default gateway in namespace: %s", err)
+	}
+
+	//enable nat for namespace
+	err = pkg.EnableNat("192.168.137.2")
+	if err != nil {
+		t.Errorf("Error enabling nat in namespace: %s", err)
 	}
 
 }

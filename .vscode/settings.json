@@ -5,9 +5,11 @@
         "brctl",
         "iface",
         "Ifaces",
+        "nameserver",
         "netns",
         "nfaces",
         "nsappnetlab",
+        "POSTROUTING",
         "veth"
     ]
 }

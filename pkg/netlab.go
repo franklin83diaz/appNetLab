@@ -1,10 +1,12 @@
 package pkg
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"os/exec"
 	"strconv"
+	"strings"
 )
 
 func GetIfaces() (list []string) {
@@ -22,6 +24,25 @@ func GetIfaces() (list []string) {
 	}
 
 	return
+}
+func GetDefaultDev() (string, error) {
+	cmd := exec.Command("ip", "route", "get", "1.1.1.1")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return "", err
+	}
+
+	fields := strings.Fields(out.String())
+	for i, field := range fields {
+		if field == "dev" {
+			if i+1 < len(fields) {
+				return fields[i+1], err
+			}
+		}
+	}
+	return "", fmt.Errorf("dev not found")
 }
 
 func NextIfaces() []string {
@@ -58,9 +79,14 @@ func CreateVethPair() (string, error) {
 		return "", fmt.Errorf("failed to create veth pair: %w", err)
 	}
 	//create bridge
-	cmd = exec.Command("sudo", "ip", "link", "set", nIfaces[0], "master", "lab-bridge")
+	cmd = exec.Command("sudo", "ip", "link", "set", nIfaces[1], "master", "lab-bridge")
 	if err := cmd.Run(); err != nil {
 		return "", fmt.Errorf("failed to set veth pair to bridge: %w", err)
+	}
+	//up interfaces
+	cmd = exec.Command("sudo", "ip", "link", "set", nIfaces[1], "up")
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("failed to set veth pair up: %w", err)
 	}
 	return nIfaces[0], nil
 }
@@ -101,7 +127,6 @@ func CreateBridge(ip string) error {
 
 // set mode router
 func SetModeRoute() error {
-	//echo 1 > /proc/sys/net/ipv4/ip_forward
 	cmd := exec.Command("sudo", "echo", "1", ">", "/proc/sys/net/ipv4/ip_forward")
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to set mode router: %w", err)
@@ -130,15 +155,7 @@ func AddIfaceToNamespace(name string, iface string) error {
 // set ip to interface in namespace
 func SetIpInNamespace(ip string, iface string, name string) error {
 	//ip netns exec ns-lab ip addr add
-	command := "sudo ip netns exec " + name + " ip addr add " + ip + " dev " + iface
-	cmd := exec.Command("sh", "-c", command)
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to set ip to interface in namespace: %w", err)
-	}
-
-	//set default route
-	command = "sudo ip netns exec " + name + " ip route add default via " + ip
-	cmd = exec.Command("sh", "-c", command)
+	cmd := exec.Command("sudo", "ip", "netns", "exec", name, "ip", "addr", "add", ip, "dev", iface)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to set ip to interface in namespace: %w", err)
 	}
@@ -146,18 +163,74 @@ func SetIpInNamespace(ip string, iface string, name string) error {
 	return nil
 }
 
+// set default gateway in namespace
+func SetDefaultGatewayInNamespace(ip string, iface string, name string) error {
+	//set default route
+	fmt.Println("sudo", "ip", "netns", "exec", name, "ip", "route", "add", "default", "via", ip)
+	cmd := exec.Command("sudo", "ip", "netns", "exec", name, "ip", "route", "add", "default", "via", ip)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to set ip to interface in namespace: %w", err)
+	}
+
+	return nil
+}
+
+// set default gateway in namespace
+func SetDefaultDNSInNamespace(dns string, iface string, name string) error {
+
+	cmdStr := fmt.Sprintf("echo 'nameserver %s' > /etc/resolv.conf", dns)
+
+	cmd := exec.Command("sudo", "ip", "netns", "exec", name, "sh", "-c", cmdStr)
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to set default DNS in namespace: %w", err)
+	}
+	return nil
+}
+
+// enable nat in namespace
+func EnableNat(ip string) error {
+
+	devDefault, err := GetDefaultDev()
+	if err != nil {
+		return fmt.Errorf("failed to get default dev: %w", err)
+	}
+
+	//enable nat only this ip
+	cmd := exec.Command("sudo", "iptables", "-t", "nat", "-A", "POSTROUTING", "-o", devDefault, "-s", ip, "-j", "MASQUERADE")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to enable nat in namespace: %w", err)
+	}
+	return nil
+}
+
+func DisableInternet(namespace string, ip string) error {
+
+	devDefault, err := GetDefaultDev()
+	if err != nil {
+		return fmt.Errorf("failed to get default dev: %w", err)
+	}
+
+	//disable nat only this ip
+	cmd := exec.Command("sudo", "iptables", "-t", "nat", "-D", "POSTROUTING", "-o", devDefault, "-s", ip, "-j", "MASQUERADE")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to enable nat in namespace: %w", err)
+	}
+	return nil
+}
+
 // up interfaces in namespace
-func UpIfaceInNamespace(name string, iface string) error {
+func UpIfaceInNamespace(namespace string, iface string) error {
 	//up interface
-	command := "sudo ip netns exec " + name + " ip link set dev " + iface + " up"
-	cmd := exec.Command("sh", "-c", command)
+
+	cmd := exec.Command("sudo", "ip", "netns", "exec", namespace, "ip", "link", "set", "dev", iface, "up")
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to set ip to interface in namespace: %w", err)
 	}
 
 	//up interface loopback
-	command = "sudo ip netns exec " + name + " ip link set dev lo up"
-	cmd = exec.Command("sh", "-c", command)
+	println("sudo", "ip", "netns", "exec", namespace, "ip", "link", "set", "dev", "lo", "up")
+	cmd = exec.Command("sudo", "ip", "netns", "exec", namespace, "ip", "link", "set", "dev", "lo", "up")
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to set ip to interface in namespace: %w", err)
 	}
@@ -167,8 +240,7 @@ func UpIfaceInNamespace(name string, iface string) error {
 
 // run command in namespace
 func RunCmdInNamespace(name string, command string) error {
-	commandString := "sudo ip netns exec " + name + " " + command
-	cmd := exec.Command("sh", "-c", commandString)
+	cmd := exec.Command("sudo", "ip", "netns", "exec", name, command)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to run command in namespace: %w", err)
 	}

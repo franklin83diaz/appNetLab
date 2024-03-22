@@ -101,4 +101,9 @@ func TestPing(t *testing.T) {
 		t.Errorf("Error enabling nat in namespace: %s", err)
 	}
 
+	//delete all
+	exec.Command("sudo", "ip", "link", "delete", "lab-bridge").Run()
+	exec.Command("sudo", "ip", "netns", "delete", namespace).Run()
+	exec.Command("sudo", "ip", "link", "delete", iface1).Run()
+
 }

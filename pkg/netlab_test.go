@@ -36,11 +36,11 @@ func TestCreateVethPair(t *testing.T) {
 		t.Errorf("Error creating bridge: %s", err)
 	}
 
-	iface, err := pkg.CreateVethPair()
+	ifaces, err := pkg.CreateVethPair()
 	if err != nil {
 		t.Errorf("Error creating veth pair: %s", err)
 	}
-	exec.Command("sudo", "ip", "link", "delete", iface).Run()
+	exec.Command("sudo", "ip", "link", "delete", ifaces[0]).Run()
 	exec.Command("sudo", "ip", "link", "delete", "lab-bridge").Run()
 }
 
@@ -67,30 +67,30 @@ func TestPing(t *testing.T) {
 	}
 
 	//create veth pair
-	iface1, err := pkg.CreateVethPair()
+	ifaces, err := pkg.CreateVethPair()
 	if err != nil {
 		t.Errorf("Error creating veth pair: %s", err)
 	}
 
 	//add veth1 to ns
-	err = pkg.AddIfaceToNamespace(namespace, iface1)
+	err = pkg.AddIfaceToNamespace(namespace, ifaces[0])
 	if err != nil {
 		t.Errorf("Error adding interface to namespace: %s", err)
 	}
 
 	//set ip to veth1 in ns
-	err = pkg.SetIpInNamespace("192.168.137.2/24", iface1, namespace)
+	err = pkg.SetIpInNamespace("192.168.137.2/24", ifaces[0], namespace)
 	if err != nil {
 		t.Errorf("Error setting ip to interface in namespace: %s", err)
 	}
 	//set veth1 up
-	err = pkg.UpIfaceInNamespace(namespace, iface1)
+	err = pkg.UpIfaceInNamespace(namespace, ifaces[0])
 	if err != nil {
 		t.Errorf("Error setting interface up in namespace: %s", err)
 	}
 
 	//ser gateway
-	err = pkg.SetDefaultGatewayInNamespace("192.168.137.254", iface1, namespace)
+	err = pkg.SetDefaultGatewayInNamespace("192.168.137.254", ifaces[0], namespace)
 	if err != nil {
 		t.Errorf("Error setting default gateway in namespace: %s", err)
 	}
@@ -101,9 +101,26 @@ func TestPing(t *testing.T) {
 		t.Errorf("Error enabling nat in namespace: %s", err)
 	}
 
+	err = pkg.SetDefaultDNSInNamespace("8.8.8.8", namespace)
+	if err != nil {
+		t.Errorf("Error setting default DNS in namespace: %s", err)
+	}
+
+	//set SetBandwidth uplaod
+	err = pkg.SetBandwidthInNamespace(namespace, ifaces[0], 1024)
+	if err != nil {
+		t.Errorf("Error setting bandwidth: %s", err)
+	}
+
+	//set SetBandwidth download
+	err = pkg.SetBandwidth(ifaces[1], 1024)
+	if err != nil {
+		t.Errorf("Error setting bandwidth: %s", err)
+	}
+
 	//delete all
 	exec.Command("sudo", "ip", "link", "delete", "lab-bridge").Run()
 	exec.Command("sudo", "ip", "netns", "delete", namespace).Run()
-	exec.Command("sudo", "ip", "link", "delete", iface1).Run()
+	exec.Command("sudo", "ip", "link", "delete", ifaces[0]).Run()
 
 }

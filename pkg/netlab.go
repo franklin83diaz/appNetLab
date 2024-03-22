@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -71,24 +72,24 @@ func NextIfaces() []string {
 
 }
 
-func CreateVethPair() (string, error) {
+func CreateVethPair() ([]string, error) {
 	nIfaces := NextIfaces()
 	//create veth pair
 	cmd := exec.Command("sudo", "ip", "link", "add", nIfaces[0], "type", "veth", "peer", "name", nIfaces[1])
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("failed to create veth pair: %w", err)
+		return []string{}, fmt.Errorf("failed to create veth pair: %w", err)
 	}
 	//create bridge
 	cmd = exec.Command("sudo", "ip", "link", "set", nIfaces[1], "master", "lab-bridge")
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("failed to set veth pair to bridge: %w", err)
+		return []string{}, fmt.Errorf("failed to set veth pair to bridge: %w", err)
 	}
 	//up interfaces
 	cmd = exec.Command("sudo", "ip", "link", "set", nIfaces[1], "up")
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("failed to set veth pair up: %w", err)
+		return []string{}, fmt.Errorf("failed to set veth pair up: %w", err)
 	}
-	return nIfaces[0], nil
+	return nIfaces, nil
 }
 
 func SetIp(ip string, iface string) error {
@@ -176,11 +177,15 @@ func SetDefaultGatewayInNamespace(ip string, iface string, name string) error {
 }
 
 // set default gateway in namespace
-func SetDefaultDNSInNamespace(dns string, iface string, name string) error {
+func SetDefaultDNSInNamespace(dns string, name string) error {
+	err := os.MkdirAll("/etc/netns/"+name+"/", 0777)
+	if err != nil {
+		fmt.Println(err)
+	}
 
-	cmdStr := fmt.Sprintf("echo 'nameserver %s' > /etc/resolv.conf", dns)
+	cmdStr := fmt.Sprintf("echo 'nameserver %s' > /etc/netns/"+name+"/resolv.conf", dns)
 
-	cmd := exec.Command("sudo", "ip", "netns", "exec", name, "sh", "-c", cmdStr)
+	cmd := exec.Command("sudo", "sh", "-c", cmdStr)
 
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to set default DNS in namespace: %w", err)
@@ -252,6 +257,37 @@ func DeleteNamespace(name string) error {
 	cmd := exec.Command("sudo", "ip", "netns", "delete", name)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to delete namespace: %w", err)
+	}
+	return nil
+}
+
+// // Traffic control
+func SetBandwidth(iface string, rateKbit int) error {
+	//set bandwidth
+
+	cmd := exec.Command("sudo", "tc", "qdisc", "add", "dev", iface, "root", "handle", "1:", "htb", "default", "99")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to set bandwidth: %w", err)
+	}
+
+	cmd = exec.Command("sudo", "tc", "class", "add", "dev", iface, "parent", "1:", "classid", "1:99", "htb", "rate", fmt.Sprintf("%dkbit", rateKbit))
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to set bandwidth: %w", err)
+	}
+	return nil
+}
+
+func SetBandwidthInNamespace(namespace string, iface string, rateKbit int) error {
+
+	//set bandwidth
+	cmd := exec.Command("sudo", "ip", "netns", "exec", namespace, "tc", "qdisc", "add", "dev", iface, "root", "handle", "1:", "htb", "default", "99")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to set bandwidth: %w", err)
+	}
+
+	cmd = exec.Command("sudo", "ip", "netns", "exec", namespace, "tc", "class", "add", "dev", iface, "parent", "1:", "classid", "1:99", "htb", "rate", fmt.Sprintf("%dkbit", rateKbit))
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to set bandwidth: %w", err)
 	}
 	return nil
 }

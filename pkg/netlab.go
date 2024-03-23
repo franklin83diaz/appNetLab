@@ -249,8 +249,23 @@ func UpIfaceInNamespace(namespace string, iface string) error {
 	return nil
 }
 
+// show namespaces
+func ShowNamespaces() error {
+	cmdStr := "ip netns | grep net-lab-"
+	cmd := exec.Command("sudo", "bash", "-c", cmdStr)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to show namespaces: %w", err)
+	}
+	fmt.Println(out.String())
+
+	return nil
+}
+
 // delete namespace
 func DeleteNamespace(name string) error {
+
 	cmd := exec.Command("sudo", "ip", "netns", "delete", name)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to delete namespace: %w", err)

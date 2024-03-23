@@ -12,7 +12,7 @@ func init() {
 	createCmd.Flags().StringP("name", "n", "", "name of the lab")
 	createCmd.Flags().StringP("ip", "i", "", "ip of the lab")
 	createCmd.Flags().Bool("int", false, "interface of the lab")
-	createCmd.Flags().StringP("run", "r", "", "command to run in the lab, example: -r=bash")
+	createCmd.Flags().StringP("sh", "s", "", "command to run in the lab, example: -sh=bash")
 
 	err := createCmd.MarkFlagRequired("name")
 	if err != nil {
@@ -41,7 +41,7 @@ var createCmd = &cobra.Command{
 		if err != nil {
 			fmt.Println(err)
 		}
-		run, err := cmd.Flags().GetString("run")
+		sh, err := cmd.Flags().GetString("sh")
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -127,12 +127,20 @@ var createCmd = &cobra.Command{
 		}
 
 		//run command in namespace
-		if run != "" {
-			err = pkg.RunCmdInNamespace(namespace, run)
+		if sh != "" {
+			err = pkg.RunCmdInNamespace(namespace, sh)
+			if err != nil {
+				fmt.Println(err)
+			}
+		} else {
+			err = pkg.RunCmdInNamespace(namespace, "bash")
 			if err != nil {
 				fmt.Println(err)
 			}
 		}
+
+		//delete namespace
+		defer pkg.DeleteNamespace(namespace)
 
 	},
 }

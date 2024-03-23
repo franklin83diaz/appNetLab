@@ -92,6 +92,7 @@ func CreateVethPair() ([]string, error) {
 }
 
 func SetIp(ip string, iface string) error {
+	fmt.Println("warning set ip in interface in host normally is not used, only in namespace")
 	cmd := exec.Command("sudo", "ip", "addr", "add", ip, "dev", iface)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to set ip to interface: %w", err)
@@ -108,7 +109,13 @@ func DeleteVethPair(veth string) error {
 }
 
 func CreateBridge(ip string) error {
-	cmd := exec.Command("sudo", "ip", "link", "add", "name", "lab-bridge", "type", "bridge")
+	//check if bridge exists, not create
+	cmd := exec.Command("sudo", "ip", "link", "show", "lab-bridge")
+	if err := cmd.Run(); err == nil {
+		return nil
+	}
+
+	cmd = exec.Command("sudo", "ip", "link", "add", "name", "lab-bridge", "type", "bridge")
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to delete veth pair: %w", err)
 	}
@@ -166,12 +173,10 @@ func SetIpInNamespace(ip string, iface string, name string) error {
 // set default gateway in namespace
 func SetDefaultGatewayInNamespace(ip string, iface string, name string) error {
 	//set default route
-	fmt.Println("sudo", "ip", "netns", "exec", name, "ip", "route", "add", "default", "via", ip)
 	cmd := exec.Command("sudo", "ip", "netns", "exec", name, "ip", "route", "add", "default", "via", ip)
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to set ip to interface in namespace: %w", err)
+		return fmt.Errorf("failed to set gateway to interface in namespace: %w", err)
 	}
-
 	return nil
 }
 
@@ -236,21 +241,11 @@ func UpIfaceInNamespace(namespace string, iface string) error {
 	}
 
 	//up interface loopback
-	println("sudo", "ip", "netns", "exec", namespace, "ip", "link", "set", "dev", "lo", "up")
 	cmd = exec.Command("sudo", "ip", "netns", "exec", namespace, "ip", "link", "set", "dev", "lo", "up")
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to set ip to interface in namespace: %w", err)
 	}
 
-	return nil
-}
-
-// run command in namespace
-func RunCmdInNamespace(name string, command string) error {
-	cmd := exec.Command("sudo", "ip", "netns", "exec", name, command)
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to run command in namespace: %w", err)
-	}
 	return nil
 }
 
@@ -260,36 +255,6 @@ func DeleteNamespace(name string) error {
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to delete namespace: %w", err)
 	}
-	return nil
-}
 
-// // Traffic control
-func SetBandwidth(iface string, rateKbit int) error {
-	//set bandwidth
-
-	cmd := exec.Command("sudo", "tc", "qdisc", "add", "dev", iface, "root", "handle", "1:", "htb", "default", "99")
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to set bandwidth: %w", err)
-	}
-
-	cmd = exec.Command("sudo", "tc", "class", "add", "dev", iface, "parent", "1:", "classid", "1:99", "htb", "rate", fmt.Sprintf("%dkbit", rateKbit), "ceil", fmt.Sprintf("%dkbit", rateKbit))
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to set bandwidth: %w", err)
-	}
-	return nil
-}
-
-func SetBandwidthInNamespace(namespace string, iface string, rateKbit int) error {
-
-	//set bandwidth
-	cmd := exec.Command("sudo", "ip", "netns", "exec", namespace, "tc", "qdisc", "add", "dev", iface, "root", "handle", "1:", "htb", "default", "99")
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to set bandwidth: %w", err)
-	}
-
-	cmd = exec.Command("sudo", "ip", "netns", "exec", namespace, "tc", "class", "add", "dev", iface, "parent", "1:", "classid", "1:99", "htb", "rate", fmt.Sprintf("%dkbit", rateKbit), "ceil", fmt.Sprintf("%dkbit", rateKbit))
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to set bandwidth: %w", err)
-	}
 	return nil
 }

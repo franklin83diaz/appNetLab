@@ -1,4 +1,4 @@
-netlab -int -ip 192.168.12.2 -u 100 -d 100 ./program
+netlab create -int -ip 192.168.12.2 -u 100 -d 100 ./program
 
 -int :set nat for exit to internet
 -ip ip of program

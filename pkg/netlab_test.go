@@ -106,7 +106,7 @@ func TestPing(t *testing.T) {
 		t.Errorf("Error setting default DNS in namespace: %s", err)
 	}
 
-	//set SetBandwidth uplaod
+	//set SetBandwidth upload
 	err = pkg.SetBandwidthInNamespace(namespace, ifaces[0], 1024)
 	if err != nil {
 		t.Errorf("Error setting bandwidth: %s", err)

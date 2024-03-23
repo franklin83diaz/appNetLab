@@ -3,13 +3,17 @@
         "addbr",
         "appnetlab",
         "brctl",
+        "classid",
+        "dkbit",
         "iface",
         "Ifaces",
+        "Kbit",
         "nameserver",
         "netns",
         "nfaces",
         "nsappnetlab",
         "POSTROUTING",
+        "qdisc",
         "veth"
     ]
 }

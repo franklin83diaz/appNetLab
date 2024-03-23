@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"net"
-	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -178,10 +177,13 @@ func SetDefaultGatewayInNamespace(ip string, iface string, name string) error {
 
 // set default gateway in namespace
 func SetDefaultDNSInNamespace(dns string, name string) error {
-	err := os.MkdirAll("/etc/netns/"+name+"/", 0777)
-	if err != nil {
-		fmt.Println(err)
-	}
+
+	// err := os.MkdirAll("/etc/netns/"+name+"/", 0777)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+
+	exec.Command("sudo", "mkdir", "-p", "/etc/netns/"+name+"/").Run()
 
 	cmdStr := fmt.Sprintf("echo 'nameserver %s' > /etc/netns/"+name+"/resolv.conf", dns)
 
@@ -270,7 +272,7 @@ func SetBandwidth(iface string, rateKbit int) error {
 		return fmt.Errorf("failed to set bandwidth: %w", err)
 	}
 
-	cmd = exec.Command("sudo", "tc", "class", "add", "dev", iface, "parent", "1:", "classid", "1:99", "htb", "rate", fmt.Sprintf("%dkbit", rateKbit))
+	cmd = exec.Command("sudo", "tc", "class", "add", "dev", iface, "parent", "1:", "classid", "1:99", "htb", "rate", fmt.Sprintf("%dkbit", rateKbit), "ceil", fmt.Sprintf("%dkbit", rateKbit))
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to set bandwidth: %w", err)
 	}
@@ -285,7 +287,7 @@ func SetBandwidthInNamespace(namespace string, iface string, rateKbit int) error
 		return fmt.Errorf("failed to set bandwidth: %w", err)
 	}
 
-	cmd = exec.Command("sudo", "ip", "netns", "exec", namespace, "tc", "class", "add", "dev", iface, "parent", "1:", "classid", "1:99", "htb", "rate", fmt.Sprintf("%dkbit", rateKbit))
+	cmd = exec.Command("sudo", "ip", "netns", "exec", namespace, "tc", "class", "add", "dev", iface, "parent", "1:", "classid", "1:99", "htb", "rate", fmt.Sprintf("%dkbit", rateKbit), "ceil", fmt.Sprintf("%dkbit", rateKbit))
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to set bandwidth: %w", err)
 	}

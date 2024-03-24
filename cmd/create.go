@@ -78,6 +78,8 @@ var createCmd = &cobra.Command{
 		//create Veth pair
 		nIfaces, err := pkg.CreateVethPair()
 		if err != nil {
+			//delete namespace
+			defer pkg.DeleteNamespace(namespace)
 			fmt.Println(err)
 			return
 		}
@@ -85,20 +87,26 @@ var createCmd = &cobra.Command{
 		//add interface to namespace
 		err = pkg.AddIfaceToNamespace(namespace, nIfaces[0])
 		if err != nil {
+			//delete namespace and interfaces
+			defer pkg.DeleteNamespace(namespace)
+			defer pkg.DeleteVethPair(nIfaces[1])
 			fmt.Println(err)
+			return
 		}
 
 		//set ip to interface in namespace
 		err = pkg.SetIpInNamespace(ipFull, nIfaces[0], namespace)
 		if err != nil {
 			fmt.Println(err)
+			//delete namespace and interface
+			defer pkg.DeleteNamespace(namespace)
+			defer pkg.DeleteVethPair(nIfaces[1])
 			return
 		}
 
 		//set interface up in namespace
 		err = pkg.UpIfaceInNamespace(namespace, nIfaces[0])
 		if err != nil {
-
 			fmt.Println(err)
 		}
 
@@ -106,13 +114,11 @@ var createCmd = &cobra.Command{
 		err = pkg.SetDefaultGatewayInNamespace(gwIp, nIfaces[0], namespace)
 		if err != nil {
 			fmt.Println(err)
-			return
 		}
 
 		//ser dns server
 		err = pkg.SetDefaultDNSInNamespace(dns, namespace)
 		if err != nil {
-
 			fmt.Println(err)
 		}
 
@@ -121,7 +127,6 @@ var createCmd = &cobra.Command{
 			//set interface up
 			err = pkg.EnableNat(ip)
 			if err != nil {
-
 				fmt.Println(err)
 			}
 		}
@@ -138,6 +143,9 @@ var createCmd = &cobra.Command{
 				fmt.Println(err)
 			}
 		}
+
+		//delete interface
+		defer pkg.DeleteVethPair(nIfaces[1])
 
 		//delete namespace
 		defer pkg.DeleteNamespace(namespace)

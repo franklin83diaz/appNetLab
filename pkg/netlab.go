@@ -216,7 +216,7 @@ func EnableNat(ip string) error {
 	return nil
 }
 
-func DisableInternet(namespace string, ip string) error {
+func DisableNat(ip string) error {
 
 	devDefault, err := GetDefaultDev()
 	if err != nil {

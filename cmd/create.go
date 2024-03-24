@@ -12,7 +12,9 @@ func init() {
 	createCmd.Flags().StringP("name", "n", "", "name of the lab")
 	createCmd.Flags().StringP("ip", "i", "", "ip of the lab")
 	createCmd.Flags().Bool("int", false, "interface of the lab")
-	createCmd.Flags().StringP("sh", "s", "", "command to run in the lab, example: -sh=bash")
+	createCmd.Flags().StringP("sh", "s", "", "shell use in the lab, example: -sh=bash")
+	createCmd.Flags().IntP("upload", "u", 0, "bandwidth upload")
+	createCmd.Flags().IntP("download", "d", 0, "bandwidth download")
 
 	err := createCmd.MarkFlagRequired("name")
 	if err != nil {
@@ -41,6 +43,15 @@ var createCmd = &cobra.Command{
 		if err != nil {
 			fmt.Println(err)
 		}
+		bandwidthUpload, err := cmd.Flags().GetInt("upload")
+		if err != nil {
+			fmt.Println(err)
+		}
+		bandwidthDownload, err := cmd.Flags().GetInt("download")
+		if err != nil {
+			fmt.Println(err)
+		}
+
 		sh, err := cmd.Flags().GetString("sh")
 		if err != nil {
 			fmt.Println(err)
@@ -131,6 +142,22 @@ var createCmd = &cobra.Command{
 			}
 		}
 
+		//set bandwidth Upload
+		if bandwidthUpload > 0 {
+			err = pkg.SetBandwidth(nIfaces[1], bandwidthUpload)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+
+		//set bandwidth Download
+		if bandwidthDownload > 0 {
+			err = pkg.SetBandwidthInNamespace(namespace, nIfaces[0], bandwidthDownload)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+
 		//run command in namespace
 		if sh != "" {
 			err = pkg.RunCmdInNamespace(namespace, sh)
@@ -139,6 +166,18 @@ var createCmd = &cobra.Command{
 			}
 		} else {
 			err = pkg.RunCmdInNamespace(namespace, "bash")
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+
+		//End of the lab
+		//////////////////////
+
+		//Delete nat
+		if enableInternet {
+			//set interface up
+			err = pkg.DisableNat(ip)
 			if err != nil {
 				fmt.Println(err)
 			}

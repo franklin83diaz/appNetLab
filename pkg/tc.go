@@ -14,7 +14,7 @@ func SetBandwidth(iface string, rateKbit int) error {
 		return fmt.Errorf("failed to set bandwidth: %w", err)
 	}
 
-	cmd = exec.Command("sudo", "tc", "class", "add", "dev", iface, "parent", "1:", "classid", "1:99", "htb", "rate", fmt.Sprintf("%dkbit", rateKbit), "ceil", fmt.Sprintf("%dkbps", rateKbit))
+	cmd = exec.Command("sudo", "tc", "class", "add", "dev", iface, "parent", "1:", "classid", "1:99", "htb", "rate", fmt.Sprintf("%dkbps", rateKbit), "ceil", fmt.Sprintf("%dkbps", rateKbit))
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to set bandwidth: %w", err)
 	}
@@ -29,7 +29,7 @@ func SetBandwidthInNamespace(namespace string, iface string, rateKbit int) error
 		return fmt.Errorf("failed to set bandwidth: %w", err)
 	}
 
-	cmd = exec.Command("sudo", "ip", "netns", "exec", namespace, "tc", "class", "add", "dev", iface, "parent", "1:", "classid", "1:99", "htb", "rate", fmt.Sprintf("%dkbit", rateKbit), "ceil", fmt.Sprintf("%dkbps", rateKbit))
+	cmd = exec.Command("sudo", "ip", "netns", "exec", namespace, "tc", "class", "add", "dev", iface, "parent", "1:", "classid", "1:99", "htb", "rate", fmt.Sprintf("%dkbps", rateKbit), "ceil", fmt.Sprintf("%dkbps", rateKbit))
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to set bandwidth: %w", err)
 	}

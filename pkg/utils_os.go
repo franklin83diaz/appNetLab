@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -52,4 +53,20 @@ func ValidateIp(ip string) error {
 	}
 
 	return nil
+}
+
+// check if binary is in path
+func CheckBinaryInPath(binaryName string) bool {
+	// Obtener el PATH del sistema.
+	path := os.Getenv("PATH")
+	paths := strings.Split(path, string(os.PathListSeparator))
+
+	// Verificar si el binario está en alguno de los directorios del PATH.
+	for _, p := range paths {
+		fullPath := filepath.Join(p, binaryName)
+		if _, err := os.Stat(fullPath); err == nil {
+			return true
+		}
+	}
+	return false
 }

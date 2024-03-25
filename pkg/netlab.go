@@ -258,7 +258,14 @@ func ShowNamespaces() error {
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to show namespaces: %w", err)
 	}
-	fmt.Println(out.String())
+	SplitOut := strings.Split(out.String(), "\n")
+	for _, ns := range SplitOut {
+		if ns != "" {
+			nsSp := strings.Split(ns, " ")
+
+			fmt.Println(ns + "\033[32m " + nsSp[0][8:] + " \033[0m")
+		}
+	}
 
 	return nil
 }

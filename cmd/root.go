@@ -28,7 +28,7 @@ var rootCmd = &cobra.Command{
 	
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-
+		fmt.Println()
 		fmt.Println("Current Configuration:")
 		fmt.Println("Interfaces Bridge: lab-bridge")
 		fmt.Printf("Interfaces: lab-veth\033[33mX\033[0m\n")
@@ -36,9 +36,10 @@ var rootCmd = &cobra.Command{
 		fmt.Println("Default Gateway: 192.168.137.1.254")
 		fmt.Println("DNS: 8.8.8.8")
 		fmt.Println()
-		fmt.Println("-------------------------")
 		fmt.Println("Namespaces Runnig:")
+		fmt.Println("-------------------------")
 		pkg.ShowNamespaces()
+		fmt.Println()
 	},
 }
 

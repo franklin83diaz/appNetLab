@@ -1,0 +1,28 @@
+name: netlab
+summary: Create network namespaces for testing.
+description: |
+      Create network namespaces for testing with limited of bandwidth and monitoring of traffic.
+version: git
+grade: stable
+base: core22
+
+confinement: devmode
+
+apps:
+  netlab:
+    command: bin/netlab
+    plugs:
+      - home
+parts:
+  netlab:
+    plugin: go
+    source-type: git
+    source: https://github.com/franklin83diaz/appNetLab.git
+    override-build: |
+      snapcraftctl build
+      mkdir -p $SNAPCRAFT_PART_INSTALL/bin
+      mv netlab $SNAPCRAFT_PART_INSTALL/bin/
+  tcpdump:
+    plugin: nil
+    stage-packages:
+      - tcpdump

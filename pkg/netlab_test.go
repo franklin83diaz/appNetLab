@@ -124,3 +124,41 @@ func TestPing(t *testing.T) {
 	exec.Command("sudo", "ip", "link", "delete", ifaces[0]).Run()
 
 }
+
+// test for GetIfacesLinkNs
+func TestGetIfacesLinkNs(t *testing.T) {
+	namespace := "ns-lab-testing"
+	err := pkg.CreateNamespace(namespace)
+	if err != nil {
+		t.Errorf("Error creating namespace: %s", err)
+	}
+	//create bridge
+	err = pkg.CreateBridge("192.168.137.254/24")
+	if err != nil {
+		t.Errorf("Error creating bridge: %s", err)
+	}
+
+	//create veth pair
+	ifaces, err := pkg.CreateVethPair()
+	if err != nil {
+		t.Errorf("Error creating veth pair: %s", err)
+	}
+	//add veth to ns
+	err = pkg.AddIfaceToNamespace(namespace, ifaces[0])
+	if err != nil {
+		t.Errorf("Error adding interface to namespace: %s", err)
+	}
+
+	ifaceFound, err := pkg.GetIfacesLinkNs(namespace)
+	if err != nil {
+		t.Errorf("Error getting interfaces linked to namespace: %s", err)
+	}
+
+	if len(ifaceFound) == 0 {
+		t.Errorf("No interfaces found")
+	}
+
+	pkg.DeleteNamespace(namespace)
+	pkg.DeleteVethPair(ifaces[1])
+
+}

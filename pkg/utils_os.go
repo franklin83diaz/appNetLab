@@ -70,3 +70,25 @@ func CheckBinaryInPath(binaryName string) bool {
 	}
 	return false
 }
+
+func GetIfacesLinkNs(namespace string) (string, error) {
+	output, err := exec.Command("ip", "link").CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("error running 'ip link': %w", err)
+	}
+
+	lines := strings.Split(string(output), "\n")
+
+	// get interfaces linked to namespace
+	var ifaceFound string
+	for i, line := range lines {
+
+		if strings.Contains(line, "link-netns "+namespace) {
+			ifaceFound = strings.Split(strings.Split(lines[i-1], ": ")[1], "@")[0]
+			ifaceFound = strings.TrimSpace(ifaceFound)
+			break
+		}
+	}
+
+	return ifaceFound, nil
+}

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"appnetlab/pkg"
 	"fmt"
 	"os"
 
@@ -27,7 +28,17 @@ var rootCmd = &cobra.Command{
 	
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Configuring App Net Lab running:")
+
+		fmt.Println("Current Configuration:")
+		fmt.Println("Interfaces Bridge: lab-bridge")
+		fmt.Printf("Interfaces: lab-veth\033[33mX\033[0m\n")
+		fmt.Println("IPs: 192.168.137.1-253")
+		fmt.Println("Default Gateway: 192.168.137.1.254")
+		fmt.Println("DNS: 8.8.8.8")
+		fmt.Println()
+		fmt.Println("-------------------------")
+		fmt.Println("Namespaces Runnig:")
+		pkg.ShowNamespaces()
 	},
 }
 

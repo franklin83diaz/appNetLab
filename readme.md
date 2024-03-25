@@ -19,12 +19,14 @@ git clone https://github.com/yourusername/netlab.git
 cd netlab
 go build
 ```
+
 Usage
-To create a new network namespace with NetLab, use the following command:
+#### To create a new network Lab, use the following command:
 
 ```
 sudo ./netlab create --ip 192.168.137.5 --name test02 --int true -u 100 -d 100
 ```
+
 Command-Line Arguments
 --ip: Assign an IP address to the namespace.
 --name: Set a name for the namespace.
@@ -32,10 +34,15 @@ Command-Line Arguments
 -u: Set the upload bandwidth limit in kbps (Kilobits per second).
 -d: Set the download bandwidth limit in kbps (Kilobits per second).
 Example
-The following example command creates a network namespace named test02 with an IP address of 192.168.137.5, NAT enabled for internet access, and bandwidth limits of 100 kbps for both upload and download:
+The following example command creates Terminal inside of network namespace named net-lab-test02 with an IP address of 192.168.137.5, NAT enabled for internet access, and bandwidth limits of 100 kbps for both upload and download.
+
+This will create a new bash terminal inside a namespace with a limited speed, to exit the terminal inside the namespace just run "exit".
+
+#### monitor network traffic
+open other new terminal (no inside of bash namespace) and run:
 
 ```
-sudo ./netlab create --ip 192.168.137.5 --name test02 --int true -u 100 -d 100
+sudo ./netlab  monitor --name test02
 ```
 ### Dependencies
 NetLab requires the following dependencies to be installed on your system:

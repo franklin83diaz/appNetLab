@@ -29,10 +29,10 @@ Command-Line Arguments
 --ip: Assign an IP address to the namespace.
 --name: Set a name for the namespace.
 --int: Enable NAT for internet access (set to true or false).
--u: Set the upload bandwidth limit in kbps.
--d: Set the download bandwidth limit in kbps.
+-u: Set the upload bandwidth limit in kBps (Kilobytes per second).
+-d: Set the download bandwidth limit in kBps (Kilobytes per second).
 Example
-The following example command creates a network namespace named test02 with an IP address of 192.168.137.5, NAT enabled for internet access, and bandwidth limits of 100 kbps for both upload and download:
+The following example command creates a network namespace named test02 with an IP address of 192.168.137.5, NAT enabled for internet access, and bandwidth limits of 100 kBps for both upload and download:
 
 ```
 sudo ./netlab create --ip 192.168.137.5 --name test02 --int true -u 100 -d 100

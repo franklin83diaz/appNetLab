@@ -1,0 +1,9 @@
+Package: netlab
+Version: 1.0.0
+Section: base
+Priority: optional
+Architecture: amd64
+Depends: libc6 (>= 2.7)
+Maintainer: Franklin Diaz <franklin83diaz@gmail.com>
+Description: Create network namespaces for testing with limited of bandwidth and monitoring of traffic.
+

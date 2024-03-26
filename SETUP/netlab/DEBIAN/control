@@ -4,6 +4,6 @@ Section: base
 Priority: optional
 Architecture: amd64
 Depends: libc6 (>= 2.7)
-Maintainer: Franklin Diaz <franklin83diaz@gmail.com>
+Maintainer: Franklin Diaz 
 Description: Create network namespaces for testing with limited of bandwidth and monitoring of traffic.
 

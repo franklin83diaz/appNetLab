@@ -50,7 +50,7 @@ func TestPing(t *testing.T) {
 	namespace := "ns-lab-01"
 
 	//set mode route
-	err := pkg.SetModeRoute()
+	err := pkg.SetModeRouter()
 	if err != nil {
 		t.Errorf("Error setting mode route: %s", err)
 	}

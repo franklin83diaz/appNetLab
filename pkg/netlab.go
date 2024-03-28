@@ -133,7 +133,7 @@ func CreateBridge(ip string) error {
 }
 
 // set mode router
-func SetModeRoute() error {
+func SetModeRouter() error {
 	cmd := exec.Command("sudo", "echo", "1", ">", "/proc/sys/net/ipv4/ip_forward")
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to set mode router: %w", err)

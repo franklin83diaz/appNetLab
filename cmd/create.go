@@ -78,6 +78,12 @@ var createCmd = &cobra.Command{
 			fmt.Println(err)
 			return
 		}
+		//set mode router
+		err = pkg.SetModeRouter()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 
 		//create namespace
 		err = pkg.CreateNamespace(namespace)
